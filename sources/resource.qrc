@@ -1,0 +1,15 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/fermion.svg</file>
+        <file>icons/gluon.svg</file>
+        <file>icons/higgs.svg</file>
+        <file>icons/photon.svg</file>
+        <file>icons/weakboson.svg</file>
+        <file>icons/new.svg</file>
+        <file>icons/save.svg</file>
+        <file>icons/open.svg</file>
+        <file>icons/export.svg</file>
+        <file>icons/delete.svg</file>
+        <file>icon.ico</file>
+    </qresource>
+</RCC>
