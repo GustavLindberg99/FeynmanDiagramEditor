@@ -3,6 +3,7 @@
 #include "latexParser.h"
 #include "particle.h"
 
+const int Particle::lineWidth = 3;
 const int Fermion::arrowSize = 10;
 const int Boson::spacing = 10;
 const int Higgs::dashLength = 10;
@@ -63,7 +64,7 @@ void Particle::addLabel(QPainterPath *path, QString *svgCode) const{
             path->addText(text.position, text.font, text.text);
         }
         if(svgCode != nullptr){
-            *svgCode += QString("<text x=\"%1\" y=\"%2\" style=\"font-size:%3pt;font-family:%4\">%5</text>").arg(text.position.x()).arg(text.position.y()).arg(QFontInfo(text.font).pointSizeF()).arg(QFontInfo(text.font).family(), text.text.toHtmlEscaped())
+            *svgCode += QString("<text x=\"%1\" y=\"%2\" style=\"font-size:%3pt;font-family:%4\">%5</text>").arg(text.position.x()).arg(text.position.y()).arg(QFontInfo(text.font).pointSizeF()).arg(QFontInfo(text.font).family(), text.text.toHtmlEscaped().replace(" ", "&#160;"))
                  .replace("α", "&#945;")
                  .replace("β", "&#946;")
                  .replace("γ", "&#947;")
@@ -101,7 +102,9 @@ void Particle::addLabel(QPainterPath *path, QString *svgCode) const{
                  .replace("ψ", "&#968;")
                  .replace("Ψ", "&#936;")
                  .replace("ω", "&#969;")
-                 .replace("Ω", "&#937;");
+                 .replace("Ω", "&#937;")
+                 .replace("±", "&#177;")
+                 .replace("̅", "&#773;");
         }
     }
 }
@@ -124,9 +127,15 @@ QString Fermion::svgCode() const{
 }
 
 QPainterPath Fermion::painterPath() const{
+    QPainterPathStroker stroker;
+    stroker.setWidth(lineWidth);
+    QPainterPath lines;
+    lines.moveTo(this->_from);
+    lines.lineTo(this->_to);
+
     QPainterPath path;
-    path.moveTo(this->_from);
-    path.lineTo(this->_to);
+    path.setFillRule(Qt::WindingFill);
+    path.addPath(stroker.createStroke(lines));
     const QList<QPoint> &arrowPoints = this->arrowPoints();
     path.moveTo(arrowPoints[0]);
     path.lineTo(arrowPoints[1]);
@@ -157,11 +166,17 @@ QString WeakBoson::svgCode() const{
 }
 
 QPainterPath WeakBoson::painterPath() const{
-    QPainterPath path;
-    path.moveTo(this->_from);
+    QPainterPathStroker stroker;
+    stroker.setWidth(lineWidth);
+    QPainterPath lines;
+    lines.moveTo(this->_from);
     for(const QPoint &point: this->points()){
-        path.lineTo(point);
+        lines.lineTo(point);
     }
+
+    QPainterPath path;
+    path.setFillRule(Qt::WindingFill);
+    path.addPath(stroker.createStroke(lines));
     this->addLabel(&path, nullptr);
     return path;
 }
@@ -204,11 +219,17 @@ QString MasslessBoson::svgCode() const{
 }
 
 QPainterPath MasslessBoson::painterPath() const{
-    QPainterPath path;
-    path.moveTo(this->_from);
-    this->iterateOverPoints([&path](const QPoint &c1, const QPoint &c2, const QPoint &end){
-        path.cubicTo(c1, c2, end);
+    QPainterPathStroker stroker;
+    stroker.setWidth(lineWidth);
+    QPainterPath lines;
+    lines.moveTo(this->_from);
+    this->iterateOverPoints([&lines](const QPoint &c1, const QPoint &c2, const QPoint &end){
+        lines.cubicTo(c1, c2, end);
     });
+
+    QPainterPath path;
+    path.setFillRule(Qt::WindingFill);
+    path.addPath(stroker.createStroke(lines));
     this->addLabel(&path, nullptr);
     return path;
 }
@@ -220,17 +241,23 @@ QString Higgs::svgCode() const{
 }
 
 QPainterPath Higgs::painterPath() const{
-    QPainterPath path;
+    QPainterPathStroker stroker;
+    stroker.setWidth(lineWidth);
+    QPainterPath lines;
     const int length = QVector2D(this->_to - this->_from).length();
     for(int i = 0; i < length; i += dashLength * 2){
-        path.moveTo(this->_from + (i * this->direction()).toPoint());
+        lines.moveTo(this->_from + (i * this->direction()).toPoint());
         if(i + dashLength > length){
-            path.lineTo(this->_to);
+            lines.lineTo(this->_to);
         }
         else{
-            path.lineTo(this->_from + ((i + dashLength) * this->direction()).toPoint());
+            lines.lineTo(this->_from + ((i + dashLength) * this->direction()).toPoint());
         }
     }
+
+    QPainterPath path;
+    path.setFillRule(Qt::WindingFill);
+    path.addPath(stroker.createStroke(lines));
     this->addLabel(&path, nullptr);
     return path;
 }

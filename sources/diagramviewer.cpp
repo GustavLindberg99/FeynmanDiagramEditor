@@ -5,17 +5,17 @@
 const int DiagramViewer::viewSize = 2000;
 const int DiagramViewer::interval = 100;
 
+const int DiagramViewer::selectionSize = 3;
+const QColor DiagramViewer::selectionColor(80, 131, 193);
+
 DiagramViewer::DiagramViewer():
     QGraphicsView(new QGraphicsScene),
     _isDrawing(false),
     _currentParticle(nullptr),
     _currentPath(nullptr),
-    _selectedPath(nullptr),
-    _selectionPen(Qt::blue)
+    _selectedPath(nullptr)
 {
     this->setGridVisibiliy(true);
-    this->_defaultPen.setWidth(2);
-    this->_selectionPen.setWidth(5);
 }
 
 DiagramViewer::~DiagramViewer(){
@@ -36,7 +36,7 @@ void DiagramViewer::stopDrawing(){
 
 void DiagramViewer::deselect(){
     if(this->_selectedPath != nullptr){
-        redrawPath(this->_selectedPath, this->_defaultPen);
+        redrawPath(this->_selectedPath);
         emit this->particleDeselected();
     }
     this->_selectedPath = nullptr;
@@ -71,23 +71,23 @@ QDataStream &operator>>(QDataStream &dataStream, DiagramViewer *diagramViewer){
     QList<Higgs> higgsBosons;
     dataStream >> fermions >> photons >> weakBosons >> gluons >> higgsBosons;
     for(const Fermion &fermion: qAsConst(fermions)){
-        QGraphicsPathItem *path = diagramViewer->scene()->addPath(fermion.painterPath(), diagramViewer->_defaultPen);
+        QGraphicsPathItem *path = diagramViewer->scene()->addPath(fermion.painterPath(), Qt::NoPen, QBrush(Qt::black));
         diagramViewer->_fermions.insert(path, fermion);
     }
     for(const Photon &photon: qAsConst(photons)){
-        QGraphicsPathItem *path = diagramViewer->scene()->addPath(photon.painterPath(), diagramViewer->_defaultPen);
+        QGraphicsPathItem *path = diagramViewer->scene()->addPath(photon.painterPath(), Qt::NoPen, QBrush(Qt::black));
         diagramViewer->_photons.insert(path, photon);
     }
     for(const WeakBoson &weakBoson: qAsConst(weakBosons)){
-        QGraphicsPathItem *path = diagramViewer->scene()->addPath(weakBoson.painterPath(), diagramViewer->_defaultPen);
+        QGraphicsPathItem *path = diagramViewer->scene()->addPath(weakBoson.painterPath(), Qt::NoPen, QBrush(Qt::black));
         diagramViewer->_weakBosons.insert(path, weakBoson);
     }
     for(const Gluon &gluon: qAsConst(gluons)){
-        QGraphicsPathItem *path = diagramViewer->scene()->addPath(gluon.painterPath(), diagramViewer->_defaultPen);
+        QGraphicsPathItem *path = diagramViewer->scene()->addPath(gluon.painterPath(), Qt::NoPen, QBrush(Qt::black));
         diagramViewer->_gluons.insert(path, gluon);
     }
     for(const Higgs &higgs: qAsConst(higgsBosons)){
-        QGraphicsPathItem *path = diagramViewer->scene()->addPath(higgs.painterPath(), diagramViewer->_defaultPen);
+        QGraphicsPathItem *path = diagramViewer->scene()->addPath(higgs.painterPath(), Qt::NoPen, QBrush(Qt::black));
         diagramViewer->_higgsBosons.insert(path, higgs);
     }
     return dataStream;
@@ -165,7 +165,7 @@ void DiagramViewer::editSelectedLabel(const QString &newText){
         else if(this->_higgsBosons.contains(this->_selectedPath)){
             this->_higgsBosons.find(this->_selectedPath).value().setLabelText(newText);
         }
-        this->_selectedPath = this->redrawPath(this->_selectedPath, this->_selectionPen);
+        this->_selectedPath = this->redrawPath(this->_selectedPath, selectionColor, selectionSize);
     }
 }
 
@@ -178,6 +178,7 @@ void DiagramViewer::deleteSelectedParticle(){
         this->_gluons.remove(this->_selectedPath);
         this->_higgsBosons.remove(this->_selectedPath);
         delete this->_selectedPath;
+        this->_selectedPath = nullptr;
         this->deselect();
     }
 }
@@ -203,7 +204,7 @@ void DiagramViewer::mousePressEvent(QMouseEvent *event){
                 this->_currentParticle = new Higgs(from, event->pos());
                 break;
             }
-            this->_currentPath = this->scene()->addPath(this->_currentParticle->painterPath(), this->_defaultPen);
+            this->_currentPath = this->scene()->addPath(this->_currentParticle->painterPath(), Qt::NoPen, QBrush(Qt::black));
         }
     }
 }
@@ -214,7 +215,7 @@ void DiagramViewer::mouseReleaseEvent(QMouseEvent *event){
         this->_currentParticle->setEndPoint(to);
         this->scene()->removeItem(this->_currentPath);
         if(this->_currentParticle->startingPoint() != to){
-            QGraphicsPathItem *path = this->scene()->addPath(this->_currentParticle->painterPath(), this->_defaultPen);
+            QGraphicsPathItem *path = this->scene()->addPath(this->_currentParticle->painterPath(), Qt::NoPen, QBrush(Qt::black));
             switch(this->_currentParticleType){
             case Particle::Fermion:
             {
@@ -288,7 +289,7 @@ void DiagramViewer::mouseReleaseEvent(QMouseEvent *event){
         QGraphicsPathItem *path = dynamic_cast<QGraphicsPathItem*>(this->scene()->itemAt(event->pos(), QTransform()));
         if(path != nullptr && path != this->_selectedPath){
             this->deselect();
-            this->_selectedPath = this->redrawPath(path, this->_selectionPen);
+            this->_selectedPath = this->redrawPath(path, selectionColor, selectionSize);
             if(this->_fermions.contains(this->_selectedPath)){
                 emit this->particleSelected(this->_fermions.find(this->_selectedPath).value());
             }
@@ -316,14 +317,22 @@ void DiagramViewer::mouseMoveEvent(QMouseEvent *event){
         this->_currentParticle->setEndPoint(event->pos());
         this->scene()->removeItem(this->_currentPath);
         delete this->_currentPath;
-        this->_currentPath = this->scene()->addPath(this->_currentParticle->painterPath(), this->_defaultPen);
+        this->_currentPath = this->scene()->addPath(this->_currentParticle->painterPath(), Qt::NoPen, QBrush(Qt::black));
     }
 }
 
-QGraphicsPathItem *DiagramViewer::redrawPath(QGraphicsPathItem *path, const QPen &pen){
+QGraphicsPathItem *DiagramViewer::redrawPath(QGraphicsPathItem *path, const QColor &color, int strokeWidth){
+    QPen pen;
+    if(strokeWidth == 0){
+        pen = Qt::NoPen;
+    }
+    else{
+        pen.setWidth(strokeWidth);
+        pen.setColor(color);
+    }
     if(this->_fermions.contains(path)){
         const Fermion fermion = this->_fermions.find(path).value();
-        QGraphicsPathItem *newPath = this->scene()->addPath(fermion.painterPath(), pen);
+        QGraphicsPathItem *newPath = this->scene()->addPath(fermion.painterPath(), pen, QBrush(color));
         this->_fermions.insert(newPath, fermion);
         this->_fermions.remove(path);
         delete path;
@@ -331,7 +340,7 @@ QGraphicsPathItem *DiagramViewer::redrawPath(QGraphicsPathItem *path, const QPen
     }
     else if(this->_photons.contains(path)){
         const Photon photon = this->_photons.find(path).value();
-        QGraphicsPathItem *newPath = this->scene()->addPath(photon.painterPath(), pen);
+        QGraphicsPathItem *newPath = this->scene()->addPath(photon.painterPath(), pen, QBrush(color));
         this->_photons.insert(newPath, photon);
         this->_photons.remove(path);
         delete path;
@@ -339,7 +348,7 @@ QGraphicsPathItem *DiagramViewer::redrawPath(QGraphicsPathItem *path, const QPen
     }
     else if(this->_weakBosons.contains(path)){
         const WeakBoson weakBoson = this->_weakBosons.find(path).value();
-        QGraphicsPathItem *newPath = this->scene()->addPath(weakBoson.painterPath(), pen);
+        QGraphicsPathItem *newPath = this->scene()->addPath(weakBoson.painterPath(), pen, QBrush(color));
         this->_weakBosons.insert(newPath, weakBoson);
         this->_weakBosons.remove(path);
         delete path;
@@ -347,7 +356,7 @@ QGraphicsPathItem *DiagramViewer::redrawPath(QGraphicsPathItem *path, const QPen
     }
     else if(this->_gluons.contains(path)){
         const Gluon gluon = this->_gluons.find(path).value();
-        QGraphicsPathItem *newPath = this->scene()->addPath(gluon.painterPath(), pen);
+        QGraphicsPathItem *newPath = this->scene()->addPath(gluon.painterPath(), pen, QBrush(color));
         this->_gluons.insert(newPath, gluon);
         this->_gluons.remove(path);
         delete path;
@@ -355,7 +364,7 @@ QGraphicsPathItem *DiagramViewer::redrawPath(QGraphicsPathItem *path, const QPen
     }
     else if(this->_higgsBosons.contains(path)){
         const Higgs higgs = this->_higgsBosons.find(path).value();
-        QGraphicsPathItem *newPath = this->scene()->addPath(higgs.painterPath(), pen);
+        QGraphicsPathItem *newPath = this->scene()->addPath(higgs.painterPath(), pen, QBrush(color));
         this->_higgsBosons.insert(newPath, higgs);
         this->_higgsBosons.remove(path);
         delete path;

@@ -40,7 +40,7 @@ protected:
     void mouseMoveEvent(QMouseEvent *event) override;
 
 private:
-    QGraphicsPathItem *redrawPath(QGraphicsPathItem *path, const QPen &pen);
+    QGraphicsPathItem *redrawPath(QGraphicsPathItem *path, const QColor &color = Qt::black, int strokeWidth = 0);
 
     bool _isDrawing;
     Particle::ParticleType _currentParticleType;
@@ -57,9 +57,9 @@ private:
 
     QGraphicsPathItem *_selectedPath;
 
-    QPen _defaultPen, _selectionPen;
-
     static const int viewSize, interval;
+    static const int selectionSize;
+    static const QColor selectionColor;
 };
 
 #endif // DIAGRAMVIEWER_H

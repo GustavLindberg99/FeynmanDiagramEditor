@@ -14,6 +14,6 @@ struct Text{
     QFont font;
 };
 
-const QList<Text> parseLatex(QString latexCode, const QPoint &position, const QFont &font, bool centerHorizontally);
+const QList<Text> parseLatex(const QString &latexCode, const QPoint &position, const QFont &font, bool centerHorizontally);
 
 #endif // LATEXPARSER_H

@@ -35,6 +35,8 @@ protected:
 
     QPoint _from, _to;
 
+    static const int lineWidth;
+
 private:
     QString _labelText;
 };
