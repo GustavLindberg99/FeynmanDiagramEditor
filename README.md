@@ -1,7 +1,7 @@
 # FeynmanDiagramEditor
 FeynmanDiagramEditor is a program to easily draw Feynman diagrams.
 
-![](https://i.stack.imgur.com/dlah1.png)
+![](https://i.stack.imgur.com/0gtDD.png)
 
 # Installation
 ## Windows
@@ -14,7 +14,16 @@ On Linux, you can download the binary file for NMLCreator [here](https://github.
 ## Drawing particles
 To draw a particle, use the button in the toolbar that looks like the line in a Feynman diagram for that particle. For example, to draw a fermion, use the <img src="https://raw.githubusercontent.com/Gustav-Lindberg/FeynmanDiagramEditor/main/sources/icons/fermion.svg" height="20"/> button. Then once you've clicked the button, drag the cursor in the drawing area from where you want the line to start to where you want it to finish.
 
-You can select a particle by clicking on it. You must click exactly on the line, close isn't enough. Once you've selected a particle, you can add a legend for it by filling out the text area in the toolbar. The Latex commands for Greek letters are supported, as well as `^` for supersript and `_` for subscript. If you don't want the particle to have a label, leave the text area blank.
+You can select a particle by clicking on it. You must click exactly on the line, close isn't enough. Once you've selected a particle, you can add a legend for it by filling out the text area in the toolbar. A very limited set of Latex commands are available:
+
+- All Greek letters
+- `\pm`
+- `\bar`
+- Subscript (`_`) and superscript (`^`) are supported as long as they're not nested
+- Escape sequences for spaces: `\:` and `\;`
+- Escape sequences for characters with a special meaning: `\^`, `\_`, `\{`, `\}` and `\backslash`
+
+If you don't want the particle to have a label, leave the text area blank.
 
 You can delete the selected particle by pressing the Delete key.
 
