@@ -52,6 +52,8 @@ private:
     QMap<QGraphicsPathItem*, WeakBoson> _weakBosons;
     QMap<QGraphicsPathItem*, Gluon> _gluons;
     QMap<QGraphicsPathItem*, Higgs> _higgsBosons;
+    QMap<QGraphicsPathItem*, Hadron> _hadrons;
+    QMap<QGraphicsPathItem*, Vertex> _vertices;
 
     QList<QGraphicsLineItem*> _grid;
 

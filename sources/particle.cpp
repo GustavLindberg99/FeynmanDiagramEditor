@@ -1,12 +1,15 @@
 #include <QFont>
 #include <QFontInfo>
+#include <QFontMetrics>
 #include "latexParser.h"
 #include "particle.h"
 
-const int Particle::lineWidth = 3;
-const int Fermion::arrowSize = 10;
-const int Boson::spacing = 10;
-const int Higgs::dashLength = 10;
+constexpr const int Particle::lineWidth = 3;
+constexpr const int Particle::vertexSize = 5;
+constexpr const int Fermion::arrowSize = 10;
+constexpr const int Boson::spacing = 10;
+constexpr const int Higgs::dashLength = 10;
+constexpr const int Hadron::margin = 10;
 
 Particle::Particle(const QPoint &from, const QPoint &to): _from(from), _to(to){}
 Particle::~Particle(){}
@@ -55,10 +58,21 @@ void Particle::addLabel(QPainterPath *path, QString *svgCode) const{
     }
     QFont defaultFont("Arial");
     QVector2D normal = this->normal();
-    if(normal.x() < 0){
+    if(normal.x() < 0 && !dynamic_cast<const class Hadron*>(this)){
         normal = -normal;
     }
-    const QPoint anchorPoint = (this->_from + this->_to) / 2 + (normal * QFontInfo(defaultFont).pixelSize() * ((normal.y() > 0) ? 1 : 0.5)).toPoint();
+    QPoint anchorPoint = (this->_from + this->_to) / 2 + (normal * QFontInfo(defaultFont).pixelSize() * ((normal.y() > 0) ? 1 : 0.5)).toPoint();
+    if(dynamic_cast<const class Vertex*>(this)){
+        anchorPoint += QPoint(0, QFontInfo(defaultFont).pixelSize());
+    }
+    if(dynamic_cast<const class Hadron*>(this)){
+        anchorPoint += (this->normal() * 15).toPoint();
+    }
+    if(normal.x() < 0){
+        for(const Text &text: parseLatex(this->labelText(), anchorPoint, defaultFont, normal.x() == 0)){
+            anchorPoint -= QPoint((normal.x() < 0) ? QFontMetrics(defaultFont).size(0, text.text).width() : 0, 0);
+        }
+    }
     for(const Text &text: parseLatex(this->labelText(), anchorPoint, defaultFont, normal.x() == 0)){
         if(path != nullptr){
             path->addText(text.position, text.font, text.text);
@@ -258,6 +272,44 @@ QPainterPath Higgs::painterPath() const{
     QPainterPath path;
     path.setFillRule(Qt::WindingFill);
     path.addPath(stroker.createStroke(lines));
+    this->addLabel(&path, nullptr);
+    return path;
+}
+
+QString Hadron::svgCode() const{
+    QString toReturn = QString("<path d=\"M%1 %2L%3 %4L%5 %6L%7 %8\" fill=\"none\" stroke=\"black\" stroke-width=\"2\"/>").arg(this->_from.x() + (-this->direction() * margin).x()).arg(this->_from.y() + (-this->direction() * margin).y()).arg(this->_from.x() + (this->normal() * margin - this->direction() * margin).x()).arg(this->_from.y() + (this->normal() * margin - this->direction() * margin).y()).arg(this->_to.x() + (this->normal() * margin + this->direction() * margin).x()).arg(this->_to.y() + (this->normal() * margin + this->direction() * margin).y()).arg(this->_to.x() + (this->direction() * margin).x()).arg(this->_to.y() + (this->direction() * margin).y());
+    this->addLabel(nullptr, &toReturn);
+    return toReturn;
+}
+
+QPainterPath Hadron::painterPath() const{
+    QPainterPathStroker stroker;
+    stroker.setWidth(lineWidth);
+    QPainterPath line;
+    line.moveTo(this->_from + (-this->direction() * margin).toPoint());
+    line.lineTo(this->_from + (this->normal() * margin - this->direction() * margin).toPoint());
+    line.lineTo(this->_to + (this->normal() * margin + this->direction() * margin).toPoint());
+    line.lineTo(this->_to + (this->direction() * margin).toPoint());
+
+    QPainterPath path;
+    path.setFillRule(Qt::WindingFill);
+    path.addPath(stroker.createStroke(line));
+    this->addLabel(&path, nullptr);
+    return path;
+}
+
+Vertex::Vertex(const QPoint &point): Particle(point, point){}
+
+QString Vertex::svgCode() const{
+    QString toReturn;
+    this->addLabel(nullptr, &toReturn);
+    return toReturn;
+}
+
+QPainterPath Vertex::painterPath() const{
+    QPainterPath path;
+    path.setFillRule(Qt::WindingFill);
+    path.addEllipse(this->_from, vertexSize, vertexSize);
     this->addLabel(&path, nullptr);
     return path;
 }

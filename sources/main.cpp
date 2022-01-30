@@ -230,11 +230,16 @@ int main(int argc, char **argv){
     QAction *addWeakBoson = drawToolbar.addAction(QIcon(":/icons/weakboson.svg"), QObject::tr("Weak Boson"));
     QAction *addGluon = drawToolbar.addAction(QIcon(":/icons/gluon.svg"), QObject::tr("Gluon"));
     QAction *addHiggs = drawToolbar.addAction(QIcon(":/icons/higgs.svg"), QObject::tr("Higgs Boson"));
+    drawToolbar.addSeparator();
+    QAction *addHadron = drawToolbar.addAction(QIcon(":/icons/hadron.svg"), QObject::tr("Group Quarks into Hadrons"));
+    QAction *addVertex = drawToolbar.addAction(QIcon(":/icons/vertex.svg"), QObject::tr("Add Label to Vertex"));
     addFermion->setCheckable(true);
     addPhoton->setCheckable(true);
     addWeakBoson->setCheckable(true);
     addGluon->setCheckable(true);
     addHiggs->setCheckable(true);
+    addHadron->setCheckable(true);
+    addVertex->setCheckable(true);
 
     QObject::connect(addFermion, &QAction::triggered, [addFermion, diagramViewer](bool checked){
         diagramViewer->stopDrawing();
@@ -276,7 +281,23 @@ int main(int argc, char **argv){
             diagramViewer->startDrawing(Particle::Higgs);
         }
     });
-    QObject::connect(diagramViewer, &DiagramViewer::drawingStopped, [mainWindow, addFermion, addPhoton, addWeakBoson, addGluon, addHiggs](){
+    QObject::connect(addHadron, &QAction::triggered, [addHadron, diagramViewer](bool checked){
+        diagramViewer->stopDrawing();
+        diagramViewer->deselect();
+        if(checked){
+            addHadron->setChecked(true);
+            diagramViewer->startDrawing(Particle::Hadron);
+        }
+    });
+    QObject::connect(addVertex, &QAction::triggered, [addVertex, diagramViewer](bool checked){
+        diagramViewer->stopDrawing();
+        diagramViewer->deselect();
+        if(checked){
+            addVertex->setChecked(true);
+            diagramViewer->startDrawing(Particle::Vertex);
+        }
+    });
+    QObject::connect(diagramViewer, &DiagramViewer::drawingStopped, [mainWindow, addFermion, addPhoton, addWeakBoson, addGluon, addHiggs, addHadron, addVertex](){
         if(!mainWindow->windowTitle().startsWith("*")){
             mainWindow->setWindowTitle("*" + mainWindow->windowTitle());
         }
@@ -285,6 +306,8 @@ int main(int argc, char **argv){
         addWeakBoson->setChecked(false);
         addGluon->setChecked(false);
         addHiggs->setChecked(false);
+        addHadron->setChecked(false);
+        addVertex->setChecked(false);
     });
     mainWindow->addToolBar(&drawToolbar);
 

@@ -11,5 +11,7 @@
         <file>icons/export.svg</file>
         <file>icons/delete.svg</file>
         <file>icon.ico</file>
+        <file>icons/hadron.svg</file>
+        <file>icons/vertex.svg</file>
     </qresource>
 </RCC>

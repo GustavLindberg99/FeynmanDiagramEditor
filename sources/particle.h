@@ -8,7 +8,7 @@
 
 class Particle{
 public:
-    enum ParticleType{Fermion, Photon, WeakBoson, Gluon, Higgs};
+    enum ParticleType{Fermion, Photon, WeakBoson, Gluon, Higgs, Hadron, Vertex};
 
     Particle(const QPoint &from = QPoint(), const QPoint &to = QPoint());
     virtual ~Particle();
@@ -35,7 +35,7 @@ protected:
 
     QPoint _from, _to;
 
-    static const int lineWidth;
+    static const int lineWidth, vertexSize;
 
 private:
     QString _labelText;
@@ -108,6 +108,25 @@ public:
 
 private:
     static const int dashLength;
+};
+
+class Hadron: public Particle{
+public:
+    using Particle::Particle;
+
+    QString svgCode() const override;
+    QPainterPath painterPath() const override;
+
+protected:
+    static const int margin;
+};
+
+class Vertex: public Particle{
+public:
+    Vertex(const QPoint &point = QPoint());
+
+    QString svgCode() const override;
+    QPainterPath painterPath() const override;
 };
 
 #endif // PARTICLE_H
