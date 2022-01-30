@@ -97,7 +97,7 @@ int main(int argc, char **argv){
         }
         else{
             QFile file(currentFile);
-            if(!file.open(QFile::WriteOnly)){
+            if(file.open(QFile::WriteOnly)){
                 QDataStream dataStream(&file);
                 dataStream << diagramViewer;
                 if(dataStream.status() == QDataStream::Ok){
@@ -113,7 +113,7 @@ int main(int argc, char **argv){
         const QString chosenFile = QFileDialog::getSaveFileName(mainWindow, QObject::tr("Save as..."), "", QObject::tr("Feynman diagram") + " (*.fdg)");
         if(!chosenFile.isEmpty()){
             QFile file(chosenFile);
-            if(!file.open(QFile::WriteOnly)){
+            if(file.open(QFile::WriteOnly)){
                 QDataStream dataStream(&file);
                 dataStream << diagramViewer;
                 if(dataStream.status() == QDataStream::Ok){
