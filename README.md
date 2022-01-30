@@ -25,6 +25,8 @@ You can select a particle by clicking on it. You must click exactly on the line,
 
 If you don't want the particle to have a label, leave the text area blank.
 
+You can also add labels to vertices. To do so, you first need to draw the vertex explicitly by clicking on the <img src="https://raw.githubusercontent.com/Gustav-Lindberg/FeynmanDiagramEditor/main/sources/icons/vertex.svg" height="20"/> button. Then add a label to the vertex just like you would for a particle.
+
 You can delete the selected particle by pressing the Delete key.
 
 ## Saving and exporting diagrams
