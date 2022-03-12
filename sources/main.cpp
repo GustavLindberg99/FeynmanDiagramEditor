@@ -57,6 +57,7 @@ int main(int argc, char **argv){
             }
         }
         diagramViewer->clear();
+        diagramViewer->resetHistory();
         currentFile.clear();
         mainWindow->setWindowTitle(QObject::tr("New document") + " - FeynmanDiagramEditor");
     });
@@ -72,7 +73,6 @@ int main(int argc, char **argv){
         }
         const QString chosenFile = QFileDialog::getOpenFileName(diagramViewer, QObject::tr("Open..."), "", QObject::tr("Feynman diagrams") + " (*.fdg)");
         if(!chosenFile.isEmpty()){
-            diagramViewer->clear();
             QFile file(chosenFile);
             if(!file.open(QFile::ReadOnly)){
                 QMessageBox::critical(diagramViewer, "", QObject::tr("Could not open the file %1. You might not have sufficient permissions to read at this location.").arg(chosenFile));
@@ -87,6 +87,7 @@ int main(int argc, char **argv){
             else{
                 currentFile.clear();
                 diagramViewer->clear();
+                diagramViewer->resetHistory();
                 QMessageBox::critical(diagramViewer, "", QObject::tr("The file %1 is not a valid Feynman diagram file.").arg(chosenFile));
             }
         }
@@ -178,6 +179,28 @@ int main(int argc, char **argv){
         }
     });
 
+    QMenu *editMenu = menuBar.addMenu(QObject::tr("&Edit"));
+    QAction *undo = editMenu->addAction(QIcon(":/icons/undo.svg"), QObject::tr("&Undo"));
+    QAction *redo = editMenu->addAction(QIcon(":/icons/redo.svg"), QObject::tr("&Redo"));
+    undo->setShortcut(QKeySequence("CTRL+Z"));
+    redo->setShortcut(QKeySequence("CTRL+Y"));
+    undo->setEnabled(false);
+    redo->setEnabled(false);
+    QObject::connect(diagramViewer, &DiagramViewer::undoAvailable, undo, &QAction::setEnabled);
+    QObject::connect(diagramViewer, &DiagramViewer::redoAvailable, redo, &QAction::setEnabled);
+    QObject::connect(undo, &QAction::triggered, diagramViewer, &DiagramViewer::undo);
+    QObject::connect(redo, &QAction::triggered, diagramViewer, &DiagramViewer::redo);
+
+    editMenu->addSeparator();
+    QAction *deselectAction = editMenu->addAction(QObject::tr("Deselect"));
+    deselectAction->setShortcut(QKeySequence("Esc"));
+    QObject::connect(deselectAction, &QAction::triggered, diagramViewer, &DiagramViewer::deselect);
+
+    editMenu->addSeparator();
+    QAction *deleteAction = editMenu->addAction(QIcon(":/icons/delete.svg"), QObject::tr("Delete selected particle"));
+    deleteAction->setEnabled(false);
+    deleteAction->setShortcut(QKeySequence("Del"));
+
     QMenu *viewMenu = menuBar.addMenu(QObject::tr("&View"));
     QMenu *toolbarMenu = viewMenu->addMenu(QObject::tr("&Toolbars"));
     QAction *toggleFileToolbar = toolbarMenu->addAction(QObject::tr("&File"));
@@ -199,7 +222,7 @@ int main(int argc, char **argv){
         QDesktopServices::openUrl(QUrl("https://github.com/Gustav-Lindberg/FeynmanDiagramEditor/blob/main/README.md"));
     });
     QObject::connect(aboutAction, &QAction::triggered, [mainWindow](){
-        QMessageBox::about(mainWindow, QObject::tr("About FeynmanDiagramEditor"), "FeynmanDiagramEditor " PROGRAMVERSION "<br/><br/>" + QObject::tr("By Gustav Lindberg") + "<br/><br/>" + QObject::tr("This program is licensed under the GNU GPL 2.0.") + "<br/><br/>" + QObject::tr("Source code:") + " <a href=\"https://github.com/Gustav-Lindberg/FeynmanDiagramEditor\">https://github.com/Gustav-Lindberg/FeynmanDiagramEditor</a><br/><br/>" + QObject::tr("Icons made by %3 and %4 from %1 are licensed by %2.").arg("<a href=\"https://www.iconfinder.com/\">www.iconfinder.com</a>", "<a href=\"http://creativecommons.org/licenses/by/3.0/\">CC 3.0 BY</a>", "<a href=\"https://www.iconfinder.com/paomedia\">Paomedia</a>", "<a href=\"https://www.iconfinder.com/webkul\">Webkul Software</a>"));
+        QMessageBox::about(mainWindow, QObject::tr("About FeynmanDiagramEditor"), "FeynmanDiagramEditor " PROGRAMVERSION "<br/><br/>" + QObject::tr("By Gustav Lindberg") + "<br/><br/>" + QObject::tr("This program is licensed under the GNU GPL 2.0.") + "<br/><br/>" + QObject::tr("Source code:") + " <a href=\"https://github.com/Gustav-Lindberg/FeynmanDiagramEditor\">https://github.com/Gustav-Lindberg/FeynmanDiagramEditor</a><br/><br/>" + QObject::tr("Icons made by %3, %4 and %5 from %1 are licensed by %2.").arg("<a href=\"https://www.iconfinder.com/\">www.iconfinder.com</a>", "<a href=\"http://creativecommons.org/licenses/by/3.0/\">CC 3.0 BY</a> and <a href=\"http://opensource.org/licenses/MIT\">MIT License</a>", "<a href=\"https://www.iconfinder.com/paomedia\">Paomedia</a>", "<a href=\"https://www.iconfinder.com/webkul\">Webkul Software</a>", "Ionicons"));
     });
     QObject::connect(aboutQtAction, &QAction::triggered, [mainWindow](){
         QMessageBox::aboutQt(mainWindow);
@@ -230,6 +253,7 @@ int main(int argc, char **argv){
     QAction *addWeakBoson = drawToolbar.addAction(QIcon(":/icons/weakboson.svg"), QObject::tr("Weak Boson"));
     QAction *addGluon = drawToolbar.addAction(QIcon(":/icons/gluon.svg"), QObject::tr("Gluon"));
     QAction *addHiggs = drawToolbar.addAction(QIcon(":/icons/higgs.svg"), QObject::tr("Higgs Boson"));
+    QAction *addGenericBoson = drawToolbar.addAction(QIcon(":/icons/genericboson.svg"), QObject::tr("Generic Boson"));
     drawToolbar.addSeparator();
     QAction *addHadron = drawToolbar.addAction(QIcon(":/icons/hadron.svg"), QObject::tr("Group Quarks into Hadrons"));
     QAction *addVertex = drawToolbar.addAction(QIcon(":/icons/vertex.svg"), QObject::tr("Add Label to Vertex"));
@@ -238,6 +262,7 @@ int main(int argc, char **argv){
     addWeakBoson->setCheckable(true);
     addGluon->setCheckable(true);
     addHiggs->setCheckable(true);
+    addGenericBoson->setCheckable(true);
     addHadron->setCheckable(true);
     addVertex->setCheckable(true);
 
@@ -281,6 +306,14 @@ int main(int argc, char **argv){
             diagramViewer->startDrawing(Particle::Higgs);
         }
     });
+    QObject::connect(addGenericBoson, &QAction::triggered, [addGenericBoson, diagramViewer](bool checked){
+        diagramViewer->stopDrawing();
+        diagramViewer->deselect();
+        if(checked){
+            addGenericBoson->setChecked(true);
+            diagramViewer->startDrawing(Particle::GenericBoson);
+        }
+    });
     QObject::connect(addHadron, &QAction::triggered, [addHadron, diagramViewer](bool checked){
         diagramViewer->stopDrawing();
         diagramViewer->deselect();
@@ -297,7 +330,7 @@ int main(int argc, char **argv){
             diagramViewer->startDrawing(Particle::Vertex);
         }
     });
-    QObject::connect(diagramViewer, &DiagramViewer::drawingStopped, [mainWindow, addFermion, addPhoton, addWeakBoson, addGluon, addHiggs, addHadron, addVertex](){
+    QObject::connect(diagramViewer, &DiagramViewer::drawingStopped, [mainWindow, addFermion, addPhoton, addWeakBoson, addGluon, addHiggs, addGenericBoson, addHadron, addVertex](){
         if(!mainWindow->windowTitle().startsWith("*")){
             mainWindow->setWindowTitle("*" + mainWindow->windowTitle());
         }
@@ -306,6 +339,7 @@ int main(int argc, char **argv){
         addWeakBoson->setChecked(false);
         addGluon->setChecked(false);
         addHiggs->setChecked(false);
+        addGenericBoson->setChecked(false);
         addHadron->setChecked(false);
         addVertex->setChecked(false);
     });
@@ -323,9 +357,6 @@ int main(int argc, char **argv){
     labelEditor->setMaximumWidth(200);
     particleToolbar.addWidget(labelEditor);
     particleToolbar.addSeparator();
-    QAction *deleteAction = particleToolbar.addAction(QIcon(":/icons/delete.svg"), QObject::tr("Delete selected particle"));
-    deleteAction->setEnabled(false);
-    deleteAction->setShortcut(QKeySequence("Del"));
 
     QObject::connect(diagramViewer, &DiagramViewer::particleSelected, [labelEditor, deleteAction](const Particle &particle){
         labelEditor->setEnabled(true);
@@ -382,6 +413,7 @@ int main(int argc, char **argv){
             else{
                 currentFile.clear();
                 diagramViewer->clear();
+                diagramViewer->resetHistory();
                 QMessageBox::critical(diagramViewer, "", QObject::tr("The file %1 is not a valid Feynman diagram file.").arg(argv[1]));
             }
         }

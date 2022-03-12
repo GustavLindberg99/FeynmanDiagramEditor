@@ -276,6 +276,26 @@ QPainterPath Higgs::painterPath() const{
     return path;
 }
 
+QString GenericBoson::svgCode() const{
+    QString toReturn = QString("<line x1=\"%1\" y1=\"%2\" x2=\"%3\" y2=\"%4\" fill=\"none\" stroke=\"black\" stroke-width=\"2\"/>").arg(this->_from.x()).arg(this->_from.y()).arg(this->_to.x()).arg(this->_to.y());
+    this->addLabel(nullptr, &toReturn);
+    return toReturn;
+}
+
+QPainterPath GenericBoson::painterPath() const{
+    QPainterPathStroker stroker;
+    stroker.setWidth(lineWidth);
+    QPainterPath line;
+    line.moveTo(this->_from);
+    line.lineTo(this->_to);
+
+    QPainterPath path;
+    path.setFillRule(Qt::WindingFill);
+    path.addPath(stroker.createStroke(line));
+    this->addLabel(&path, nullptr);
+    return path;
+}
+
 QString Hadron::svgCode() const{
     QString toReturn = QString("<path d=\"M%1 %2L%3 %4L%5 %6L%7 %8\" fill=\"none\" stroke=\"black\" stroke-width=\"2\"/>").arg(this->_from.x() + (-this->direction() * margin).x()).arg(this->_from.y() + (-this->direction() * margin).y()).arg(this->_from.x() + (this->normal() * margin - this->direction() * margin).x()).arg(this->_from.y() + (this->normal() * margin - this->direction() * margin).y()).arg(this->_to.x() + (this->normal() * margin + this->direction() * margin).x()).arg(this->_to.y() + (this->normal() * margin + this->direction() * margin).y()).arg(this->_to.x() + (this->direction() * margin).x()).arg(this->_to.y() + (this->direction() * margin).y());
     this->addLabel(nullptr, &toReturn);

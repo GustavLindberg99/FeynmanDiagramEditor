@@ -13,5 +13,8 @@
         <file>icon.ico</file>
         <file>icons/hadron.svg</file>
         <file>icons/vertex.svg</file>
+        <file>icons/genericboson.svg</file>
+        <file>icons/redo.svg</file>
+        <file>icons/undo.svg</file>
     </qresource>
 </RCC>

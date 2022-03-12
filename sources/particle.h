@@ -8,7 +8,7 @@
 
 class Particle{
 public:
-    enum ParticleType{Fermion, Photon, WeakBoson, Gluon, Higgs, Hadron, Vertex};
+    enum ParticleType{Fermion, Photon, WeakBoson, Gluon, Higgs, GenericBoson, Hadron, Vertex};
 
     Particle(const QPoint &from = QPoint(), const QPoint &to = QPoint());
     virtual ~Particle();
@@ -108,6 +108,14 @@ public:
 
 private:
     static const int dashLength;
+};
+
+class GenericBoson: public Particle{
+public:
+    using Particle::Particle;
+
+    QString svgCode() const override;
+    QPainterPath painterPath() const override;
 };
 
 class Hadron: public Particle{
