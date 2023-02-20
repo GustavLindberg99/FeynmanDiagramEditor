@@ -219,10 +219,10 @@ int main(int argc, char **argv){
 
     helpAction->setShortcut(QKeySequence("F1"));
     QObject::connect(helpAction, &QAction::triggered, [](){
-        QDesktopServices::openUrl(QUrl("https://github.com/Gustav-Lindberg/FeynmanDiagramEditor/blob/main/README.md"));
+        QDesktopServices::openUrl(QUrl("https://github.com/GustavLindberg99/FeynmanDiagramEditor/blob/main/README.md"));
     });
     QObject::connect(aboutAction, &QAction::triggered, [mainWindow](){
-        QMessageBox::about(mainWindow, QObject::tr("About FeynmanDiagramEditor"), "FeynmanDiagramEditor " PROGRAMVERSION "<br/><br/>" + QObject::tr("By Gustav Lindberg") + "<br/><br/>" + QObject::tr("This program is licensed under the GNU GPL 3.0.") + "<br/><br/>" + QObject::tr("Source code:") + " <a href=\"https://github.com/Gustav-Lindberg/FeynmanDiagramEditor\">https://github.com/Gustav-Lindberg/FeynmanDiagramEditor</a><br/><br/>" + QObject::tr("Icons made by %3, %4 and %5 from %1 are licensed by %2.").arg("<a href=\"https://www.iconfinder.com/\">www.iconfinder.com</a>", "<a href=\"http://creativecommons.org/licenses/by/3.0/\">CC 3.0 BY</a> and <a href=\"http://opensource.org/licenses/MIT\">MIT License</a>", "<a href=\"https://www.iconfinder.com/paomedia\">Paomedia</a>", "<a href=\"https://www.iconfinder.com/webkul\">Webkul Software</a>", "Ionicons"));
+        QMessageBox::about(mainWindow, QObject::tr("About FeynmanDiagramEditor"), "FeynmanDiagramEditor " PROGRAMVERSION "<br/><br/>" + QObject::tr("By Gustav Lindberg") + "<br/><br/>" + QObject::tr("This program is licensed under the GNU GPL 3.0.") + "<br/><br/>" + QObject::tr("Source code:") + " <a href=\"https://github.com/GustavLindberg99/FeynmanDiagramEditor\">https://github.com/GustavLindberg99/FeynmanDiagramEditor</a><br/><br/>" + QObject::tr("Icons made by %3, %4 and %5 from %1 are licensed by %2.").arg("<a href=\"https://www.iconfinder.com/\">www.iconfinder.com</a>", "<a href=\"http://creativecommons.org/licenses/by/3.0/\">CC 3.0 BY</a> and <a href=\"http://opensource.org/licenses/MIT\">MIT License</a>", "<a href=\"https://www.iconfinder.com/paomedia\">Paomedia</a>", "<a href=\"https://www.iconfinder.com/webkul\">Webkul Software</a>", "Ionicons"));
     });
     QObject::connect(aboutQtAction, &QAction::triggered, [mainWindow](){
         QMessageBox::aboutQt(mainWindow);

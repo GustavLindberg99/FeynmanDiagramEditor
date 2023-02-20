@@ -61,7 +61,7 @@ void Particle::addLabel(QPainterPath *path, QString *svgCode) const{
     if(normal.x() < 0 && !dynamic_cast<const class Hadron*>(this)){
         normal = -normal;
     }
-    QPoint anchorPoint = (this->_from + this->_to) / 2 + (normal * QFontInfo(defaultFont).pixelSize() * ((normal.y() > 0) ? 1 : 0.5)).toPoint();
+    QPoint anchorPoint = (this->_from + this->_to) / 2 + (normal * QFontInfo(defaultFont).pixelSize() * 0.5 * (1 + (normal.y() > 0) + (dynamic_cast<const Boson*>(this) != nullptr))).toPoint();
     if(dynamic_cast<const class Vertex*>(this)){
         anchorPoint += QPoint(0, QFontInfo(defaultFont).pixelSize());
     }
