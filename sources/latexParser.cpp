@@ -72,6 +72,7 @@ QString latexSequenceToUnicode(const QString &token){
     else if(token == "\\Psi") return "Ψ";
     else if(token == "\\omega") return "ω";
     else if(token == "\\Omega") return "Ω";
+    else if(token == "\\ell") return "ℓ";
     else if(token == "\\pm") return "±";
     else if(token == "\\:") return " ";
     else if(token == "\\;") return "  ";
