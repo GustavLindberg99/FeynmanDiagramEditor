@@ -18,6 +18,7 @@ You can select a particle by clicking on it. You must click exactly on the line,
 
 - All Greek letters
 - `\pm`
+- `\ell`
 - `\bar`
 - Subscript (`_`) and superscript (`^`) are supported as long as they're not nested
 - Escape sequences for spaces: `\:` and `\;`
