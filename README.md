@@ -31,6 +31,6 @@ You can also add labels to vertices. To do so, you first need to draw the vertex
 You can delete the selected particle by pressing the Delete key.
 
 ## Saving and exporting diagrams
-You can save a Feynman diagram in the FDG format (a format exclusively used by FeynmanDiagramEditor) by pressing CTRL+S. You open FDG files in FeynmanDiagramEditor by pressing CTRL+O.
+You can save a Feynman diagram in the FDG format (a format specific for FeynmanDiagramEditor) by pressing CTRL+S. You open FDG files in FeynmanDiagramEditor by pressing CTRL+O.
 
 If you want to use your Feynman diagram elsewhere, you can also export it in more common formats (SVG, PNG or PDF). To do this, press CTRL+E. FeynmanDiagramEditor can only create files in these formats, it can't open them. So if you think you might want to edit the Feynman diagram later, you should also save a copy of it in the FDG format.
