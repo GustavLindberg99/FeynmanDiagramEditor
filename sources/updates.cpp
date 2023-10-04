@@ -11,7 +11,7 @@
 #include "updates.h"
 #include "version.h"
 
-//This file is shared between projects, which is why there is both Windows-specific and Linux-specific code even in projects that aren't cross-platform.
+//This file is shared between projects, which is why there is both Windows-specific and Linux-specific code regardless of whether or not the project is cross-platform.
 
 void installUpdates(const QUrl &githubRepo, const QUrl &zipFileOrLinuxBinaryOrInstaller, const std::function<void()> &quit){
     #ifdef _WIN32
@@ -146,10 +146,8 @@ void installUpdates(const QUrl &githubRepo, const QUrl &zipFileOrLinuxBinaryOrIn
                 "downloadedFileName=$(printf '%q\n' \"$3\")\n"
                 "githubRepo=$(printf '%q\n' \"$4\")\n"
                 "if mv \"$downloadedFileName\" \"$mainExecutable\"; then\n"
-            "echo \"$mainExecutable\" > /tmp/log.log\n"
                     "\"$mainExecutable\"\n"
                 "else\n"
-            "echo Bad > /tmp/log.log\n"
                     "python -m webbrowser \"$githubRepo\"\n"
                 "fi\n"
                 "rm -rf \"$temporaryFolder\""
