@@ -13,11 +13,27 @@
 #include <QDesktopServices>
 #include "windowwithclosesignal.hpp"
 #include "diagramviewer.h"
+#include "updates.h"
 #include "version.h"
+
+//Local variables of the main function never go out of scope, so this warning is useless in this particular file (although it's useful in other files)
+//clazy:excludeall=lambda-in-connect
 
 int main(int argc, char **argv){
     QApplication app(argc, argv);
     app.addLibraryPath("./");    //Otherwise weird things happen, see https://stackoverflow.com/a/25266269/4284627
+
+    checkForUpdates(
+        QUrl("https://github.com/GustavLindberg99/FeynmanDiagramEditor"),
+        QUrl("https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/sources/version.h"),
+        #ifdef _WIN32
+            QUrl("https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/FeynmanDiagramEditor-windows.zip"),
+            QUrl("https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/FeynmanDiagramEditor-setup-windows.exe")
+        #else
+            QUrl("https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/FeynmanDiagramEditor-linux"),
+            QUrl()
+        #endif
+    );
 
     MainWindow *mainWindow = new MainWindow;
     mainWindow->setWindowTitle(QObject::tr("New document") + " - FeynmanDiagramEditor");
@@ -46,7 +62,7 @@ int main(int argc, char **argv){
     quitAction->setShortcut(QKeySequence("CTRL+Q"));
 
     QString currentFile;
-    QObject::connect(newAction, &QAction::triggered, [mainWindow, diagramViewer, &currentFile, saveAction](){
+    QObject::connect(newAction, &QAction::triggered, diagramViewer, [mainWindow, diagramViewer, &currentFile, saveAction](){
         if(mainWindow->windowTitle().startsWith("*")){
             switch(QMessageBox::warning(mainWindow, "", QObject::tr("Do you want to save before quitting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel)){
             case QMessageBox::Yes:
@@ -61,7 +77,7 @@ int main(int argc, char **argv){
         currentFile.clear();
         mainWindow->setWindowTitle(QObject::tr("New document") + " - FeynmanDiagramEditor");
     });
-    QObject::connect(openAction, &QAction::triggered, [mainWindow, diagramViewer, &currentFile, saveAction](){
+    QObject::connect(openAction, &QAction::triggered, diagramViewer, [mainWindow, diagramViewer, &currentFile, saveAction](){
         if(mainWindow->windowTitle().startsWith("*")){
             switch(QMessageBox::warning(mainWindow, "", QObject::tr("Do you want to save before quitting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel)){
             case QMessageBox::Yes:
@@ -92,7 +108,7 @@ int main(int argc, char **argv){
             }
         }
     });
-    QObject::connect(saveAction, &QAction::triggered, [mainWindow, diagramViewer, &currentFile, saveAsAction](){
+    QObject::connect(saveAction, &QAction::triggered, diagramViewer, [mainWindow, diagramViewer, &currentFile, saveAsAction](){
         if(currentFile.isEmpty()){
             saveAsAction->trigger();
         }
@@ -110,7 +126,7 @@ int main(int argc, char **argv){
             saveAsAction->trigger();
         }
     });
-    QObject::connect(saveAsAction, &QAction::triggered, [mainWindow, diagramViewer, &currentFile](){
+    QObject::connect(saveAsAction, &QAction::triggered, diagramViewer, [mainWindow, diagramViewer, &currentFile](){
         const QString chosenFile = QFileDialog::getSaveFileName(mainWindow, QObject::tr("Save as..."), "", QObject::tr("Feynman diagram") + " (*.fdg)");
         if(!chosenFile.isEmpty()){
             QFile file(chosenFile);
@@ -126,7 +142,7 @@ int main(int argc, char **argv){
             QMessageBox::critical(diagramViewer, "", QObject::tr("Could not save the file %1. You might not have sufficient permissions to write at this location.").arg(chosenFile));
         }
     });
-    QObject::connect(exportAction, &QAction::triggered, [diagramViewer](){
+    QObject::connect(exportAction, &QAction::triggered, diagramViewer, [diagramViewer](){
         const QString &svgCode = diagramViewer->toSvg();
         if(svgCode.isEmpty()){
             QMessageBox::critical(diagramViewer, "", QObject::tr("This diagram is empty. Please draw something before exporting."));
@@ -163,7 +179,7 @@ int main(int argc, char **argv){
             }
         }
     });
-    QObject::connect(quitAction, &QAction::triggered, [mainWindow, saveAction, &app](){
+    QObject::connect(quitAction, &QAction::triggered, saveAction, [mainWindow, saveAction, &app](){
         if(mainWindow->windowTitle().startsWith("*")){
             switch(QMessageBox::warning(mainWindow, "", QObject::tr("Do you want to save before quitting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel)){
             case QMessageBox::Yes:
@@ -221,10 +237,10 @@ int main(int argc, char **argv){
     QObject::connect(helpAction, &QAction::triggered, [](){
         QDesktopServices::openUrl(QUrl("https://github.com/GustavLindberg99/FeynmanDiagramEditor/blob/main/README.md"));
     });
-    QObject::connect(aboutAction, &QAction::triggered, [mainWindow](){
+    QObject::connect(aboutAction, &QAction::triggered, mainWindow, [mainWindow](){
         QMessageBox::about(mainWindow, QObject::tr("About FeynmanDiagramEditor"), "FeynmanDiagramEditor " PROGRAMVERSION "<br/><br/>" + QObject::tr("By Gustav Lindberg") + "<br/><br/>" + QObject::tr("This program is licensed under the GNU GPL 3.0.") + "<br/><br/>" + QObject::tr("Source code:") + " <a href=\"https://github.com/GustavLindberg99/FeynmanDiagramEditor\">https://github.com/GustavLindberg99/FeynmanDiagramEditor</a><br/><br/>" + QObject::tr("Icons made by %3, %4 and %5 from %1 are licensed by %2.").arg("<a href=\"https://www.iconfinder.com/\">www.iconfinder.com</a>", "<a href=\"http://creativecommons.org/licenses/by/3.0/\">CC 3.0 BY</a> and <a href=\"http://opensource.org/licenses/MIT\">MIT License</a>", "<a href=\"https://www.iconfinder.com/paomedia\">Paomedia</a>", "<a href=\"https://www.iconfinder.com/webkul\">Webkul Software</a>", "Ionicons"));
     });
-    QObject::connect(aboutQtAction, &QAction::triggered, [mainWindow](){
+    QObject::connect(aboutQtAction, &QAction::triggered, mainWindow, [mainWindow](){
         QMessageBox::aboutQt(mainWindow);
     });
 
@@ -266,7 +282,7 @@ int main(int argc, char **argv){
     addHadron->setCheckable(true);
     addVertex->setCheckable(true);
 
-    QObject::connect(addFermion, &QAction::triggered, [addFermion, diagramViewer](bool checked){
+    QObject::connect(addFermion, &QAction::triggered, diagramViewer, [addFermion, diagramViewer](bool checked){
         diagramViewer->stopDrawing();
         diagramViewer->deselect();
         if(checked){
@@ -274,7 +290,7 @@ int main(int argc, char **argv){
             diagramViewer->startDrawing(Particle::Fermion);
         }
     });
-    QObject::connect(addPhoton, &QAction::triggered, [addPhoton, diagramViewer](bool checked){
+    QObject::connect(addPhoton, &QAction::triggered, diagramViewer, [addPhoton, diagramViewer](bool checked){
         diagramViewer->stopDrawing();
         diagramViewer->deselect();
         if(checked){
@@ -282,7 +298,7 @@ int main(int argc, char **argv){
             diagramViewer->startDrawing(Particle::Photon);
         }
     });
-    QObject::connect(addWeakBoson, &QAction::triggered, [addWeakBoson, diagramViewer](bool checked){
+    QObject::connect(addWeakBoson, &QAction::triggered, diagramViewer, [addWeakBoson, diagramViewer](bool checked){
         diagramViewer->stopDrawing();
         diagramViewer->deselect();
         if(checked){
@@ -290,7 +306,7 @@ int main(int argc, char **argv){
             diagramViewer->startDrawing(Particle::WeakBoson);
         }
     });
-    QObject::connect(addGluon, &QAction::triggered, [addGluon, diagramViewer](bool checked){
+    QObject::connect(addGluon, &QAction::triggered, diagramViewer, [addGluon, diagramViewer](bool checked){
         diagramViewer->stopDrawing();
         diagramViewer->deselect();
         if(checked){
@@ -298,7 +314,7 @@ int main(int argc, char **argv){
             diagramViewer->startDrawing(Particle::Gluon);
         }
     });
-    QObject::connect(addHiggs, &QAction::triggered, [addHiggs, diagramViewer](bool checked){
+    QObject::connect(addHiggs, &QAction::triggered, diagramViewer, [addHiggs, diagramViewer](bool checked){
         diagramViewer->stopDrawing();
         diagramViewer->deselect();
         if(checked){
@@ -306,7 +322,7 @@ int main(int argc, char **argv){
             diagramViewer->startDrawing(Particle::Higgs);
         }
     });
-    QObject::connect(addGenericBoson, &QAction::triggered, [addGenericBoson, diagramViewer](bool checked){
+    QObject::connect(addGenericBoson, &QAction::triggered, diagramViewer, [addGenericBoson, diagramViewer](bool checked){
         diagramViewer->stopDrawing();
         diagramViewer->deselect();
         if(checked){
@@ -314,7 +330,7 @@ int main(int argc, char **argv){
             diagramViewer->startDrawing(Particle::GenericBoson);
         }
     });
-    QObject::connect(addHadron, &QAction::triggered, [addHadron, diagramViewer](bool checked){
+    QObject::connect(addHadron, &QAction::triggered, diagramViewer, [addHadron, diagramViewer](bool checked){
         diagramViewer->stopDrawing();
         diagramViewer->deselect();
         if(checked){
@@ -322,7 +338,7 @@ int main(int argc, char **argv){
             diagramViewer->startDrawing(Particle::Hadron);
         }
     });
-    QObject::connect(addVertex, &QAction::triggered, [addVertex, diagramViewer](bool checked){
+    QObject::connect(addVertex, &QAction::triggered, diagramViewer, [addVertex, diagramViewer](bool checked){
         diagramViewer->stopDrawing();
         diagramViewer->deselect();
         if(checked){
@@ -330,7 +346,7 @@ int main(int argc, char **argv){
             diagramViewer->startDrawing(Particle::Vertex);
         }
     });
-    QObject::connect(diagramViewer, &DiagramViewer::drawingStopped, [mainWindow, addFermion, addPhoton, addWeakBoson, addGluon, addHiggs, addGenericBoson, addHadron, addVertex](){
+    QObject::connect(diagramViewer, &DiagramViewer::drawingStopped, mainWindow, [mainWindow, addFermion, addPhoton, addWeakBoson, addGluon, addHiggs, addGenericBoson, addHadron, addVertex](){
         if(!mainWindow->windowTitle().startsWith("*")){
             mainWindow->setWindowTitle("*" + mainWindow->windowTitle());
         }
@@ -358,17 +374,17 @@ int main(int argc, char **argv){
     particleToolbar.addWidget(labelEditor);
     particleToolbar.addSeparator();
 
-    QObject::connect(diagramViewer, &DiagramViewer::particleSelected, [labelEditor, deleteAction](const Particle &particle){
+    QObject::connect(diagramViewer, &DiagramViewer::particleSelected, labelEditor, [labelEditor, deleteAction](const Particle &particle){
         labelEditor->setEnabled(true);
         deleteAction->setEnabled(true);
         labelEditor->setText(particle.labelText());
     });
-    QObject::connect(diagramViewer, &DiagramViewer::particleDeselected, [labelEditor, deleteAction](){
+    QObject::connect(diagramViewer, &DiagramViewer::particleDeselected, labelEditor, [labelEditor, deleteAction](){
         labelEditor->clear();
         labelEditor->setEnabled(false);
         deleteAction->setEnabled(false);
     });
-    QObject::connect(labelEditor, &QLineEdit::textEdited, [mainWindow, diagramViewer](const QString &text){
+    QObject::connect(labelEditor, &QLineEdit::textEdited, diagramViewer, [mainWindow, diagramViewer](const QString &text){
         if(!mainWindow->windowTitle().startsWith("*")){
             mainWindow->setWindowTitle("*" + mainWindow->windowTitle());
         }
@@ -382,7 +398,7 @@ int main(int argc, char **argv){
     });
     mainWindow->addToolBar(&particleToolbar);
 
-    QObject::connect(mainWindow, &MainWindow::aboutToClose, [mainWindow, saveAction](QCloseEvent *event){
+    QObject::connect(mainWindow, &MainWindow::aboutToClose, saveAction, [mainWindow, saveAction](QCloseEvent *event){
         if(mainWindow->windowTitle().startsWith("*")){
             switch(QMessageBox::warning(mainWindow, "", QObject::tr("Do you want to save before quitting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel)){
             case QMessageBox::Yes:

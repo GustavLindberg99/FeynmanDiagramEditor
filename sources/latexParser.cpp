@@ -18,7 +18,8 @@ const QStringList tokenize(const QString &latexCode){
             toReturn.append("");
         }
         else if(toReturn.last().startsWith('\\')){
-            if(toReturn.last().contains(QRegularExpression("^\\\\[_^{}:;]$"))){
+            static const QRegularExpression escapeRegex("^\\\\[_^{}:;]$");
+            if(toReturn.last().contains(escapeRegex)){
                 toReturn.append("");
             }
             else if(!character.isLetter() && (toReturn.last().length() >= 2 || (character != '_' && character != '^' && character != '{' && character != '}' && character != ':' && character != ';'))){
