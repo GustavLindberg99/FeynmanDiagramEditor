@@ -5,10 +5,10 @@ FeynmanDiagramEditor is a program to easily draw Feynman diagrams.
 
 # Installation
 ## Windows
-On Windows, the recommended way of installing FeynmanDiagramEditor is to download and run [this installation program](https://github.com/Gustav-Lindberg/FeynmanDiagramEditor/raw/main/FeynmanDiagramEditor-setup-windows.exe). If you can't or don't want to use the installation program, you can also download [this zip file](https://github.com/Gustav-Lindberg/FeynmanDiagramEditor/raw/main/FeynmanDiagramEditor-windows.zip) containing the executable and its dependencies.
+On Windows, the recommended way of installing FeynmanDiagramEditor is to download and run [this installation program](https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/FeynmanDiagramEditor-install-windows.exe). If you can't or don't want to use the installation program, you can also download [this zip file](https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/FeynmanDiagramEditor-portable-windows.zip) containing the executable and its dependencies.
 
 ## Linux
-On Linux, you can download the binary file for FeynmanDiagramEditor [here](https://github.com/Gustav-Lindberg/FeynmanDiagramEditor/raw/main/FeynmanDiagramEditor-linux). Place it in whatever folder you want and run it.
+On Linux, you can download the binary file for FeynmanDiagramEditor [here](https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/FeynmanDiagramEditor-linux). Place it in whatever folder you want and run it.
 
 # Usage
 ## Drawing particles
