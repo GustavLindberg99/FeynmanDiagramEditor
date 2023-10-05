@@ -27,8 +27,8 @@ int main(int argc, char **argv){
         QUrl("https://github.com/GustavLindberg99/FeynmanDiagramEditor"),
         QUrl("https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/sources/version.h"),
         #ifdef _WIN32
-            QUrl("https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/FeynmanDiagramEditor-windows.zip"),
-            QUrl("https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/FeynmanDiagramEditor-setup-windows.exe")
+            QUrl("https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/FeynmanDiagramEditor-portable-windows.zip"),
+            QUrl("https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/FeynmanDiagramEditor-install-windows.exe")
         #else
             QUrl("https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/FeynmanDiagramEditor-linux"),
             QUrl()
@@ -184,7 +184,7 @@ int main(int argc, char **argv){
             switch(QMessageBox::warning(mainWindow, "", QObject::tr("Do you want to save before quitting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel)){
             case QMessageBox::Yes:
                 saveAction->trigger();
-                //No break
+                //fall through
             case QMessageBox::No:
                 app.quit();
                 break;
@@ -403,7 +403,7 @@ int main(int argc, char **argv){
             switch(QMessageBox::warning(mainWindow, "", QObject::tr("Do you want to save before quitting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel)){
             case QMessageBox::Yes:
                 saveAction->trigger();
-                //No break
+                //fall through
             case QMessageBox::No:
                 event->accept();
                 break;
