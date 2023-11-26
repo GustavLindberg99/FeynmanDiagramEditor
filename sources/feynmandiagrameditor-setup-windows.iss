@@ -3,13 +3,13 @@
 
 #define MyAppName         "FeynmanDiagramEditor"
 #define MyAppExeName      MyAppName + ".exe"
-#define MyAppExePath      "C:\Users\glind\OneDrive\Documents\FeynmanDiagramEditor\build-FeynmanDiagramEditor\release"
-#define MyDepenciesPath   "C:\Users\glind\OneDrive\Documents\FeynmanDiagramEditor\windows-dependencies"
+#define MyAppExePath      "..\build\release"
+#define MyDepenciesPath   "..\windows-dependencies"
 #define MyAppVersion      GetVersionNumbersString(MyAppExePath + "\" + MyAppExeName)
 #define MyAppURL          "https://github.com/GustavLindberg99/FeynmanDiagramEditor"
-#define MyAppOutputDir    "C:\Users\glind\OneDrive\Documents\FeynmanDiagramEditor"
-#define MyAppOutputExe    "FeynmanDiagramEditor-setup-windows"
-#define MyAppLicenseFile  "C:\Users\glind\OneDrive\Documents\FeynmanDiagramEditor\license.txt"
+#define MyAppOutputDir    ".."
+#define MyAppOutputExe    "FeynmanDiagramEditor-install-windows"
+#define MyAppLicenseFile  "..\LICENSE"
 #define MyAppCompany      "Gustav Lindberg"
 #define MyAppStartingYear "2021"
 #define CurrentYear       GetDateTimeString('yyyy','','')
