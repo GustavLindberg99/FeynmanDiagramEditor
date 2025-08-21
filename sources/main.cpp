@@ -1,19 +1,25 @@
 #include <QApplication>
-#include <QMessageBox>
+#include <QDesktopServices>
 #include <QFileDialog>
-#include <QMenuBar>
-#include <QToolBar>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QLabel>
 #include <QLineEdit>
-#include <QSvgRenderer>
+#include <QMenuBar>
+#include <QMessageBox>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include <QPdfWriter>
 #include <QRegularExpression>
-#include <QTemporaryDir>
 #include <QScreen>
-#include <QDesktopServices>
-#include "windowwithclosesignal.hpp"
-#include "diagramviewer.h"
-#include "updates.h"
+#include <QSvgRenderer>
+#include <QTemporaryDir>
+#include <QVersionNumber>
+#include <QToolBar>
+
+#include "mainwindow.hpp"
+#include "diagramviewer.hpp"
 #include "version.h"
 
 //Local variables of the main function never go out of scope, so this warning is useless in this particular file (although it's useful in other files)
@@ -23,25 +29,39 @@ int main(int argc, char **argv){
     QApplication app(argc, argv);
     app.addLibraryPath("./");    //Otherwise weird things happen, see https://stackoverflow.com/a/25266269/4284627
 
-    checkForUpdates(
-        QUrl("https://github.com/GustavLindberg99/FeynmanDiagramEditor"),
-        QUrl("https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/sources/version.h"),
-        #ifdef _WIN32
-            QUrl("https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/FeynmanDiagramEditor-portable-windows.zip"),
-            QUrl("https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/FeynmanDiagramEditor-install-windows.exe")
-        #else
-            QUrl("https://raw.githubusercontent.com/GustavLindberg99/FeynmanDiagramEditor/main/FeynmanDiagramEditor-linux"),
-            QUrl()
-        #endif
-    );
 
-    MainWindow *mainWindow = new MainWindow;
-    mainWindow->setWindowTitle(QObject::tr("New document") + " - FeynmanDiagramEditor");
-    mainWindow->setWindowIcon(QIcon(":/icon.ico"));
 
-    DiagramViewer *diagramViewer = new DiagramViewer;
+    //Check for updates
+    QNetworkAccessManager networkAccessManager;
+    QNetworkRequest request(QUrl("https://api.github.com/repos/GustavLindberg99/FeynmanDiagramEditor/git/refs/tags"));
+    QNetworkReply* reply = networkAccessManager.get(request);
+    QObject::connect(reply, &QNetworkReply::finished, [reply](){
+        const QJsonArray allRefs = QJsonDocument::fromJson(reply->readAll()).array();
+        const QVersionNumber currentVersion(MAJORVERSION, MINORVERSION, PATCHVERSION);
+        QVersionNumber latestVersion(0, 0, 0);
+        for(const QJsonValue& ref: allRefs){
+            static const QRegularExpression tagRegex(R"(^refs/tags/([0-9]+)\.([0-9]+)\.([0-9]+)$)");
+            const QJsonObject tagObject = ref.toObject();
+            const QString tagAsString = tagObject["ref"].toString();
+            const QRegularExpressionMatch match = tagRegex.match(tagAsString);
+            if(match.hasMatch()){
+                const QVersionNumber tagVersion(match.captured(1).toInt(), match.captured(2).toInt(), match.captured(3).toInt());
+                latestVersion = qMax(latestVersion, tagVersion);
+            }
+        }
+        if(latestVersion > currentVersion && QMessageBox::question(nullptr, "", QObject::tr("An update is available.<br/><br/>Do you want to install it now?")) == QMessageBox::Yes){
+            QDesktopServices::openUrl(QUrl("https://github.com/GustavLindberg99/FeynmanDiagramEditor/releases/tag/" + latestVersion.toString()));
+        }
+    });
+
+
+    MainWindow mainWindow;
+    mainWindow.setWindowTitle(QObject::tr("New document") + " - FeynmanDiagramEditor");
+    mainWindow.setWindowIcon(QIcon(":/icons/icon.ico"));
+
+    DiagramViewer *diagramViewer = new DiagramViewer(&mainWindow);
     diagramViewer->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
-    mainWindow->setCentralWidget(diagramViewer);
+    mainWindow.setCentralWidget(diagramViewer);
 
     QMenuBar menuBar;
     QMenu *fileMenu = menuBar.addMenu(QObject::tr("&File"));
@@ -62,9 +82,9 @@ int main(int argc, char **argv){
     quitAction->setShortcut(QKeySequence("CTRL+Q"));
 
     QString currentFile;
-    QObject::connect(newAction, &QAction::triggered, diagramViewer, [mainWindow, diagramViewer, &currentFile, saveAction](){
-        if(mainWindow->windowTitle().startsWith("*")){
-            switch(QMessageBox::warning(mainWindow, "", QObject::tr("Do you want to save before quitting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel)){
+    QObject::connect(newAction, &QAction::triggered, diagramViewer, [&mainWindow, diagramViewer, &currentFile, saveAction](){
+        if(mainWindow.windowTitle().startsWith("*")){
+            switch(QMessageBox::warning(&mainWindow, "", QObject::tr("Do you want to save before quitting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel)){
             case QMessageBox::Yes:
                 saveAction->trigger();
                 break;
@@ -75,11 +95,11 @@ int main(int argc, char **argv){
         diagramViewer->clear();
         diagramViewer->resetHistory();
         currentFile.clear();
-        mainWindow->setWindowTitle(QObject::tr("New document") + " - FeynmanDiagramEditor");
+        mainWindow.setWindowTitle(QObject::tr("New document") + " - FeynmanDiagramEditor");
     });
-    QObject::connect(openAction, &QAction::triggered, diagramViewer, [mainWindow, diagramViewer, &currentFile, saveAction](){
-        if(mainWindow->windowTitle().startsWith("*")){
-            switch(QMessageBox::warning(mainWindow, "", QObject::tr("Do you want to save before quitting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel)){
+    QObject::connect(openAction, &QAction::triggered, diagramViewer, [&mainWindow, diagramViewer, &currentFile, saveAction](){
+        if(mainWindow.windowTitle().startsWith("*")){
+            switch(QMessageBox::warning(&mainWindow, "", QObject::tr("Do you want to save before quitting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel)){
             case QMessageBox::Yes:
                 saveAction->trigger();
                 break;
@@ -98,7 +118,7 @@ int main(int argc, char **argv){
             dataStream >> diagramViewer;
             if(dataStream.status() == QDataStream::Ok){
                 currentFile = chosenFile;
-                mainWindow->setWindowTitle(currentFile + " - FeynmanDiagramEditor");
+                mainWindow.setWindowTitle(currentFile + " - FeynmanDiagramEditor");
             }
             else{
                 currentFile.clear();
@@ -108,7 +128,7 @@ int main(int argc, char **argv){
             }
         }
     });
-    QObject::connect(saveAction, &QAction::triggered, diagramViewer, [mainWindow, diagramViewer, &currentFile, saveAsAction](){
+    QObject::connect(saveAction, &QAction::triggered, diagramViewer, [&mainWindow, diagramViewer, &currentFile, saveAsAction](){
         if(currentFile.isEmpty()){
             saveAsAction->trigger();
         }
@@ -118,7 +138,7 @@ int main(int argc, char **argv){
                 QDataStream dataStream(&file);
                 dataStream << diagramViewer;
                 if(dataStream.status() == QDataStream::Ok){
-                    mainWindow->setWindowTitle(currentFile + " - FeynmanDiagramEditor");
+                    mainWindow.setWindowTitle(currentFile + " - FeynmanDiagramEditor");
                     return;
                 }
             }
@@ -126,8 +146,8 @@ int main(int argc, char **argv){
             saveAsAction->trigger();
         }
     });
-    QObject::connect(saveAsAction, &QAction::triggered, diagramViewer, [mainWindow, diagramViewer, &currentFile](){
-        const QString chosenFile = QFileDialog::getSaveFileName(mainWindow, QObject::tr("Save as..."), "", QObject::tr("Feynman diagram") + " (*.fdg)");
+    QObject::connect(saveAsAction, &QAction::triggered, diagramViewer, [&mainWindow, diagramViewer, &currentFile](){
+        const QString chosenFile = QFileDialog::getSaveFileName(&mainWindow, QObject::tr("Save as..."), "", QObject::tr("Feynman diagram") + " (*.fdg)");
         if(!chosenFile.isEmpty()){
             QFile file(chosenFile);
             if(file.open(QFile::WriteOnly)){
@@ -135,7 +155,7 @@ int main(int argc, char **argv){
                 dataStream << diagramViewer;
                 if(dataStream.status() == QDataStream::Ok){
                     currentFile = chosenFile;
-                    mainWindow->setWindowTitle(currentFile + " - FeynmanDiagramEditor");
+                    mainWindow.setWindowTitle(currentFile + " - FeynmanDiagramEditor");
                 }
                 return;
             }
@@ -179,9 +199,9 @@ int main(int argc, char **argv){
             }
         }
     });
-    QObject::connect(quitAction, &QAction::triggered, saveAction, [mainWindow, saveAction, &app](){
-        if(mainWindow->windowTitle().startsWith("*")){
-            switch(QMessageBox::warning(mainWindow, "", QObject::tr("Do you want to save before quitting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel)){
+    QObject::connect(quitAction, &QAction::triggered, saveAction, [&mainWindow, saveAction, &app](){
+        if(mainWindow.windowTitle().startsWith("*")){
+            switch(QMessageBox::warning(&mainWindow, "", QObject::tr("Do you want to save before quitting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel)){
             case QMessageBox::Yes:
                 saveAction->trigger();
                 //fall through
@@ -237,14 +257,14 @@ int main(int argc, char **argv){
     QObject::connect(helpAction, &QAction::triggered, [](){
         QDesktopServices::openUrl(QUrl("https://github.com/GustavLindberg99/FeynmanDiagramEditor/blob/main/README.md"));
     });
-    QObject::connect(aboutAction, &QAction::triggered, mainWindow, [mainWindow](){
-        QMessageBox::about(mainWindow, QObject::tr("About FeynmanDiagramEditor"), "FeynmanDiagramEditor " PROGRAMVERSION "<br/><br/>" + QObject::tr("By Gustav Lindberg") + "<br/><br/>" + QObject::tr("This program is licensed under the GNU GPL 3.0.") + "<br/><br/>" + QObject::tr("Source code:") + " <a href=\"https://github.com/GustavLindberg99/FeynmanDiagramEditor\">https://github.com/GustavLindberg99/FeynmanDiagramEditor</a><br/><br/>" + QObject::tr("Icons made by %3, %4 and %5 from %1 are licensed by %2.").arg("<a href=\"https://www.iconfinder.com/\">www.iconfinder.com</a>", "<a href=\"http://creativecommons.org/licenses/by/3.0/\">CC 3.0 BY</a> and <a href=\"http://opensource.org/licenses/MIT\">MIT License</a>", "<a href=\"https://www.iconfinder.com/paomedia\">Paomedia</a>", "<a href=\"https://www.iconfinder.com/webkul\">Webkul Software</a>", "Ionicons"));
+    QObject::connect(aboutAction, &QAction::triggered, &mainWindow, [&mainWindow](){
+        QMessageBox::about(&mainWindow, QObject::tr("About FeynmanDiagramEditor"), "FeynmanDiagramEditor " PROGRAMVERSION "<br/><br/>" + QObject::tr("By Gustav Lindberg") + "<br/><br/>" + QObject::tr("This program is licensed under the GNU GPL 3.0.") + "<br/><br/>" + QObject::tr("Source code:") + " <a href=\"https://github.com/GustavLindberg99/FeynmanDiagramEditor\">https://github.com/GustavLindberg99/FeynmanDiagramEditor</a><br/><br/>" + QObject::tr("Icons made by %3, %4 and %5 from %1 are licensed by %2.").arg("<a href=\"https://www.iconfinder.com/\">www.iconfinder.com</a>", "<a href=\"http://creativecommons.org/licenses/by/3.0/\">CC 3.0 BY</a> and <a href=\"http://opensource.org/licenses/MIT\">MIT License</a>", "<a href=\"https://www.iconfinder.com/paomedia\">Paomedia</a>", "<a href=\"https://www.iconfinder.com/webkul\">Webkul Software</a>", "Ionicons"));
     });
-    QObject::connect(aboutQtAction, &QAction::triggered, mainWindow, [mainWindow](){
-        QMessageBox::aboutQt(mainWindow);
+    QObject::connect(aboutQtAction, &QAction::triggered, &mainWindow, [&mainWindow](){
+        QMessageBox::aboutQt(&mainWindow);
     });
 
-    mainWindow->setMenuBar(&menuBar);
+    mainWindow.setMenuBar(&menuBar);
 
     QToolBar fileToolbar(QObject::tr("&File"));
     toggleFileToolbar->setCheckable(true);
@@ -256,7 +276,7 @@ int main(int argc, char **argv){
     fileToolbar.addAction(openAction);
     fileToolbar.addAction(saveAction);
     fileToolbar.addAction(exportAction);
-    mainWindow->addToolBar(&fileToolbar);
+    mainWindow.addToolBar(&fileToolbar);
 
     QToolBar drawToolbar(QObject::tr("&Draw particles"));
     toggleDrawToolbar->setCheckable(true);
@@ -346,9 +366,9 @@ int main(int argc, char **argv){
             diagramViewer->startDrawing(Particle::Vertex);
         }
     });
-    QObject::connect(diagramViewer, &DiagramViewer::drawingStopped, mainWindow, [mainWindow, addFermion, addPhoton, addWeakBoson, addGluon, addHiggs, addGenericBoson, addHadron, addVertex](){
-        if(!mainWindow->windowTitle().startsWith("*")){
-            mainWindow->setWindowTitle("*" + mainWindow->windowTitle());
+    QObject::connect(diagramViewer, &DiagramViewer::drawingStopped, &mainWindow, [&mainWindow, addFermion, addPhoton, addWeakBoson, addGluon, addHiggs, addGenericBoson, addHadron, addVertex](){
+        if(!mainWindow.windowTitle().startsWith("*")){
+            mainWindow.setWindowTitle("*" + mainWindow.windowTitle());
         }
         addFermion->setChecked(false);
         addPhoton->setChecked(false);
@@ -359,7 +379,7 @@ int main(int argc, char **argv){
         addHadron->setChecked(false);
         addVertex->setChecked(false);
     });
-    mainWindow->addToolBar(&drawToolbar);
+    mainWindow.addToolBar(&drawToolbar);
 
     QToolBar particleToolbar(QObject::tr("&Manage particles"));
     toggleParticleToolbar->setCheckable(true);
@@ -384,23 +404,23 @@ int main(int argc, char **argv){
         labelEditor->setEnabled(false);
         deleteAction->setEnabled(false);
     });
-    QObject::connect(labelEditor, &QLineEdit::textEdited, diagramViewer, [mainWindow, diagramViewer](const QString &text){
-        if(!mainWindow->windowTitle().startsWith("*")){
-            mainWindow->setWindowTitle("*" + mainWindow->windowTitle());
+    QObject::connect(labelEditor, &QLineEdit::textEdited, diagramViewer, [&mainWindow, diagramViewer](const QString &text){
+        if(!mainWindow.windowTitle().startsWith("*")){
+            mainWindow.setWindowTitle("*" + mainWindow.windowTitle());
         }
         diagramViewer->editSelectedLabel(text);
     });
-    QObject::connect(deleteAction, &QAction::triggered, diagramViewer, [mainWindow, diagramViewer](){
-        if(!mainWindow->windowTitle().startsWith("*")){
-            mainWindow->setWindowTitle("*" + mainWindow->windowTitle());
+    QObject::connect(deleteAction, &QAction::triggered, diagramViewer, [&mainWindow, diagramViewer](){
+        if(!mainWindow.windowTitle().startsWith("*")){
+            mainWindow.setWindowTitle("*" + mainWindow.windowTitle());
         }
         diagramViewer->deleteSelectedParticle();
     });
-    mainWindow->addToolBar(&particleToolbar);
+    mainWindow.addToolBar(&particleToolbar);
 
-    QObject::connect(mainWindow, &MainWindow::aboutToClose, saveAction, [mainWindow, saveAction](QCloseEvent *event){
-        if(mainWindow->windowTitle().startsWith("*")){
-            switch(QMessageBox::warning(mainWindow, "", QObject::tr("Do you want to save before quitting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel)){
+    QObject::connect(&mainWindow, &MainWindow::aboutToClose, saveAction, [&mainWindow, saveAction](QCloseEvent *event){
+        if(mainWindow.windowTitle().startsWith("*")){
+            switch(QMessageBox::warning(&mainWindow, "", QObject::tr("Do you want to save before quitting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel)){
             case QMessageBox::Yes:
                 saveAction->trigger();
                 //fall through
@@ -424,7 +444,7 @@ int main(int argc, char **argv){
             dataStream >> diagramViewer;
             if(dataStream.status() == QDataStream::Ok){
                 currentFile = argv[1];
-                mainWindow->setWindowTitle(currentFile + " - FeynmanDiagramEditor");
+                mainWindow.setWindowTitle(currentFile + " - FeynmanDiagramEditor");
             }
             else{
                 currentFile.clear();
@@ -435,7 +455,7 @@ int main(int argc, char **argv){
         }
     }
 
-    mainWindow->showMaximized();
+    mainWindow.showMaximized();
 
     return app.exec();
 }

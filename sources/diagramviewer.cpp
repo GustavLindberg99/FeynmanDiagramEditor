@@ -1,6 +1,6 @@
 #include <QMouseEvent>
 #include <QGraphicsPathItem>
-#include "diagramviewer.h"
+#include "diagramviewer.hpp"
 
 const int DiagramViewer::viewSize = 2000;
 const int DiagramViewer::interval = 100;
@@ -8,8 +8,8 @@ const int DiagramViewer::interval = 100;
 const int DiagramViewer::selectionSize = 3;
 const QColor DiagramViewer::selectionColor(80, 131, 193);
 
-DiagramViewer::DiagramViewer():
-    QGraphicsView(new QGraphicsScene),
+DiagramViewer::DiagramViewer(QWidget *parent):
+    QGraphicsView(new QGraphicsScene(parent), parent),
     _isDrawing(false),
     _currentParticle(nullptr),
     _currentPath(nullptr),
@@ -17,12 +17,6 @@ DiagramViewer::DiagramViewer():
 {
     this->resetHistory();
     this->setGridVisibiliy(true);
-}
-
-DiagramViewer::~DiagramViewer(){
-    if(this->_currentParticle != nullptr){
-        delete this->_currentParticle;
-    }
 }
 
 void DiagramViewer::startDrawing(Particle::ParticleType particleType){
@@ -35,10 +29,7 @@ void DiagramViewer::stopDrawing(){
         delete this->_currentPath;
         this->_currentPath = nullptr;
     }
-    if(this->_currentParticle != nullptr){
-        delete this->_currentParticle;
-        this->_currentParticle = nullptr;
-    }
+    this->_currentParticle = nullptr;
     this->_isDrawing = false;
     emit this->drawingStopped();
 }
@@ -157,7 +148,7 @@ QString DiagramViewer::toSvg() const{
 }
 
 void DiagramViewer::setGridVisibiliy(bool visible){
-    for(QGraphicsLineItem *line: qAsConst(this->_grid)){
+    for(QGraphicsLineItem *line: std::as_const(this->_grid)){
         this->scene()->removeItem(line);
         delete line;
     }
@@ -251,28 +242,28 @@ void DiagramViewer::mousePressEvent(QMouseEvent *event){
             const QPoint from = (QVector2D(event->pos()) / interval).toPoint() * interval;
             switch(this->_currentParticleType){
             case Particle::Fermion:
-                this->_currentParticle = new Fermion(from, event->pos());
+                this->_currentParticle = std::make_unique<Fermion>(from, event->pos());
                 break;
             case Particle::Photon:
-                this->_currentParticle = new Photon(from, event->pos());
+                this->_currentParticle = std::make_unique<Photon>(from, event->pos());
                 break;
             case Particle::WeakBoson:
-                this->_currentParticle = new WeakBoson(from, event->pos());
+                this->_currentParticle = std::make_unique<WeakBoson>(from, event->pos());
                 break;
             case Particle::Gluon:
-                this->_currentParticle = new Gluon(from, event->pos());
+                this->_currentParticle = std::make_unique<Gluon>(from, event->pos());
                 break;
             case Particle::Higgs:
-                this->_currentParticle = new Higgs(from, event->pos());
+                this->_currentParticle = std::make_unique<Higgs>(from, event->pos());
                 break;
             case Particle::GenericBoson:
-                this->_currentParticle = new GenericBoson(from, event->pos());
+                this->_currentParticle = std::make_unique<GenericBoson>(from, event->pos());
                 break;
             case Particle::Hadron:
-                this->_currentParticle = new Hadron(from, event->pos());
+                this->_currentParticle = std::make_unique<Hadron>(from, event->pos());
                 break;
             case Particle::Vertex:
-                this->_currentParticle = new Vertex(from);
+                this->_currentParticle = std::make_unique<Vertex>(from);
                 break;
             }
             this->_currentPath = this->scene()->addPath(this->_currentParticle->painterPath(), Qt::NoPen, QBrush(Qt::black));
@@ -304,28 +295,28 @@ void DiagramViewer::mouseReleaseEvent(QMouseEvent *event){
             QGraphicsPathItem *path = this->scene()->addPath(this->_currentParticle->painterPath(), Qt::NoPen, QBrush(Qt::black));
             switch(this->_currentParticleType){
             case Particle::Fermion:
-                mouseReleaseEvent_helper(this->_particleList.fermions, this->_currentParticle, path, this->scene());
+                mouseReleaseEvent_helper(this->_particleList.fermions, this->_currentParticle.get(), path, this->scene());
                 break;
             case Particle::Photon:
-                mouseReleaseEvent_helper(this->_particleList.photons, this->_currentParticle, path, this->scene());
+                mouseReleaseEvent_helper(this->_particleList.photons, this->_currentParticle.get(), path, this->scene());
                 break;
             case Particle::WeakBoson:
-                mouseReleaseEvent_helper(this->_particleList.weakBosons, this->_currentParticle, path, this->scene());
+                mouseReleaseEvent_helper(this->_particleList.weakBosons, this->_currentParticle.get(), path, this->scene());
                 break;
             case Particle::Gluon:
-                mouseReleaseEvent_helper(this->_particleList.gluons, this->_currentParticle, path, this->scene());
+                mouseReleaseEvent_helper(this->_particleList.gluons, this->_currentParticle.get(), path, this->scene());
                 break;
             case Particle::Higgs:
-                mouseReleaseEvent_helper(this->_particleList.higgsBosons, this->_currentParticle, path, this->scene());
+                mouseReleaseEvent_helper(this->_particleList.higgsBosons, this->_currentParticle.get(), path, this->scene());
                 break;
             case Particle::GenericBoson:
-                mouseReleaseEvent_helper(this->_particleList.genericBosons, this->_currentParticle, path, this->scene());
+                mouseReleaseEvent_helper(this->_particleList.genericBosons, this->_currentParticle.get(), path, this->scene());
                 break;
             case Particle::Hadron:
-                mouseReleaseEvent_helper(this->_particleList.hadrons, this->_currentParticle, path, this->scene());
+                mouseReleaseEvent_helper(this->_particleList.hadrons, this->_currentParticle.get(), path, this->scene());
                 break;
             case Particle::Vertex:
-                mouseReleaseEvent_helper(this->_particleList.vertices, this->_currentParticle, path, this->scene());
+                mouseReleaseEvent_helper(this->_particleList.vertices, this->_currentParticle.get(), path, this->scene());
                 break;
             }
         }

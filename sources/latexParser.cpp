@@ -1,7 +1,8 @@
+#include "latexParser.hpp"
+
 #include <QRegularExpression>
 #include <QFontMetrics>
 #include <QFontInfo>
-#include "latexParser.h"
 
 const QStringList tokenize(const QString &latexCode){
     QStringList toReturn("");

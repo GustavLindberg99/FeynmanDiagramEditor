@@ -1,8 +1,10 @@
+#include "particle.hpp"
+
 #include <QFont>
 #include <QFontInfo>
 #include <QFontMetrics>
-#include "latexParser.h"
-#include "particle.h"
+
+#include "latexParser.hpp"
 
 constexpr const int Particle::lineWidth = 3;
 constexpr const int Particle::vertexSize = 5;
